@@ -1,54 +1,35 @@
 import { create } from 'zustand'
-import { persist } from 'zustand/middleware'
-import type { AuthResponse, UserToken } from '@/types'
+import type { Session } from '@supabase/supabase-js'
+import { supabase } from '@/lib/supabase'
 
 interface AuthState {
-  user: UserToken | null
-  accessToken: string | null
-  refreshToken: string | null
+  session: Session | null
   isAuthenticated: boolean
-  setAuth: (auth: AuthResponse) => void
-  logout: () => void
-  isAdmin: () => boolean
-  isEmployee: () => boolean
+  isLoading: boolean
+  setSession: (session: Session | null) => void
+  logout: () => Promise<void>
 }
 
-export const useAuthStore = create<AuthState>()(
-  persist(
-    (set, get) => ({
-      user: null,
-      accessToken: null,
-      refreshToken: null,
-      isAuthenticated: false,
+export const useAuthStore = create<AuthState>((set) => ({
+  session: null,
+  isAuthenticated: false,
+  isLoading: true,
 
-      setAuth: (auth) =>
-        set({
-          user: auth.user,
-          accessToken: auth.accessToken,
-          refreshToken: auth.refreshToken,
-          isAuthenticated: true,
-        }),
+  setSession: (session) =>
+    set({ session, isAuthenticated: !!session, isLoading: false }),
 
-      logout: () =>
-        set({
-          user: null,
-          accessToken: null,
-          refreshToken: null,
-          isAuthenticated: false,
-        }),
+  logout: async () => {
+    await supabase.auth.signOut()
+    set({ session: null, isAuthenticated: false })
+  },
+}))
 
-      isAdmin: () => get().user?.roles.includes('Admin') ?? false,
-      isEmployee: () =>
-        get().user?.roles.some((r) => ['Admin', 'Employee'].includes(r)) ?? false,
-    }),
-    {
-      name: 'pisante-auth',
-      partialize: (s) => ({
-        user: s.user,
-        accessToken: s.accessToken,
-        refreshToken: s.refreshToken,
-        isAuthenticated: s.isAuthenticated,
-      }),
-    }
-  )
-)
+// Inicializa sessão ao carregar (Supabase persiste no localStorage automaticamente)
+supabase.auth.getSession().then(({ data }) => {
+  useAuthStore.getState().setSession(data.session)
+})
+
+// Mantém sincronizado com mudanças de auth (login, logout, refresh de token)
+supabase.auth.onAuthStateChange((_event, session) => {
+  useAuthStore.getState().setSession(session)
+})

@@ -15,7 +15,6 @@ interface VariantRow {
   color: string
   sku: string
   stockQuantity: number
-  priceAdjustment: number
 }
 
 const emptyVariant = (): VariantRow => ({
@@ -23,7 +22,6 @@ const emptyVariant = (): VariantRow => ({
   color: '',
   sku: '',
   stockQuantity: 0,
-  priceAdjustment: 0,
 })
 
 export function AdminProductFormPage() {
@@ -73,7 +71,6 @@ export function AdminProductFormPage() {
                 color: v.color ?? '',
                 sku: v.sku,
                 stockQuantity: v.stockQuantity,
-                priceAdjustment: v.priceAdjustment ?? 0,
               }))
             : [emptyVariant()]
         )
@@ -140,7 +137,6 @@ export function AdminProductFormPage() {
           color: v.color || undefined,
           sku: v.sku || `${prefix}-${v.size}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`,
           stockQuantity: Number(v.stockQuantity),
-          priceAdjustment: Number(v.priceAdjustment) || 0,
         })),
       }
 

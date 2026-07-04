@@ -1,23 +1,14 @@
-import api from './api'
-import type { AuthResponse } from '@/types'
+import { supabase } from '@/lib/supabase'
 
 export const authService = {
-  register: (data: {
-    firstName: string
-    lastName: string
-    email: string
-    password: string
-    confirmPassword: string
-  }) => api.post<AuthResponse>('/auth/register', data).then((r) => r.data),
+  login: async (email: string, password: string) => {
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password })
+    if (error) throw error
+    return data.session
+  },
 
-  login: (email: string, password: string) =>
-    api.post<AuthResponse>('/auth/login', { email, password }).then((r) => r.data),
-
-  refreshToken: (token: string) =>
-    api.post<AuthResponse>('/auth/refresh-token', { token }).then((r) => r.data),
-
-  revokeToken: (token: string) => api.post('/auth/revoke-token', { token }),
-
-  changePassword: (currentPassword: string, newPassword: string, confirmNewPassword: string) =>
-    api.post('/auth/change-password', { currentPassword, newPassword, confirmNewPassword }),
+  logout: async () => {
+    const { error } = await supabase.auth.signOut()
+    if (error) throw error
+  },
 }
