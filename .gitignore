@@ -1,0 +1,40 @@
+# ─── .NET / C# ───────────────────────────────────────────────────────────────
+**/bin/
+**/obj/
+**/*.user
+**/*.suo
+*.sln.DotSettings.user
+.vs/
+
+# Secrets — não commitar credenciais reais
+backend/src/PisanteAtm.API/appsettings.json
+backend/src/PisanteAtm.API/appsettings.Development.json
+backend/src/PisanteAtm.API/appsettings.Production.json
+
+# Logs
+logs/
+*.log
+Serilog/
+
+# ─── Node / React ─────────────────────────────────────────────────────────────
+node_modules/
+frontend/dist/
+pisante-atm/build/
+
+# Variáveis de ambiente — nunca commitar valores reais
+frontend/.env
+frontend/.env.local
+frontend/.env.production
+frontend/.env.*.local
+
+# ─── Uploads locais (storage do backend C# legado) ────────────────────────────
+uploads/
+
+# ─── OS / IDE ─────────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+.idea/
+*.swp
+
+# ─── Claude Code ──────────────────────────────────────────────────────────────
+skills-lock.json
