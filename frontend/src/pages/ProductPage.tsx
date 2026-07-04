@@ -15,6 +15,7 @@ export function ProductPage() {
   const [product, setProduct] = useState<Product | null>(null)
   const [loading, setLoading] = useState(true)
   const [selectedImage, setSelectedImage] = useState(0)
+  const [selectedColor, setSelectedColor] = useState<string | null>(null)
   const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(null)
   const [quantity, setQuantity] = useState(1)
   const [adding, setAdding] = useState(false)
@@ -24,11 +25,57 @@ export function ProductPage() {
     if (!slug) return
     productService.getBySlug(slug).then((p) => {
       setProduct(p)
-      const primary = p.images.findIndex((i) => i.isPrimary)
-      setSelectedImage(primary >= 0 ? primary : 0)
-      if (p.variants.length > 0) setSelectedVariant(p.variants[0])
+
+      // Imagem principal
+      const primaryIdx = p.images.findIndex((i) => i.isPrimary)
+      setSelectedImage(primaryIdx >= 0 ? primaryIdx : 0)
+
+      // Se tem variantes com cor, pré-seleciona a primeira cor e o primeiro tamanho dela
+      const firstWithColor = p.variants.find((v) => v.color)
+      if (firstWithColor?.color) {
+        setSelectedColor(firstWithColor.color)
+        const firstVariant =
+          p.variants.find((v) => v.color === firstWithColor.color && v.stockQuantity > 0) ??
+          p.variants.find((v) => v.color === firstWithColor.color) ??
+          null
+        setSelectedVariant(firstVariant)
+      } else if (p.variants.length > 0) {
+        // Produto sem cores — pré-seleciona primeiro tamanho disponível
+        const firstVariant =
+          p.variants.find((v) => v.stockQuantity > 0) ?? p.variants[0]
+        setSelectedVariant(firstVariant ?? null)
+      }
     }).catch(() => navigate('/404')).finally(() => setLoading(false))
   }, [slug, navigate])
+
+  // Cores únicas do produto (ordem de aparição)
+  const uniqueColors: string[] = product
+    ? [...new Set(product.variants.filter((v) => v.color).map((v) => v.color!))]
+    : []
+
+  const hasColors = uniqueColors.length > 0
+
+  // Variantes filtradas pela cor selecionada
+  const variantsForColor: ProductVariant[] = product
+    ? hasColors && selectedColor
+      ? product.variants.filter((v) => v.color === selectedColor)
+      : product.variants
+    : []
+
+  const handleColorSelect = (color: string) => {
+    if (!product) return
+    setSelectedColor(color)
+    setQuantity(1)
+
+    // Primeiro tamanho disponível da nova cor (ou primeiro se todos esgotados)
+    const ofColor = product.variants.filter((v) => v.color === color)
+    const first = ofColor.find((v) => v.stockQuantity > 0) ?? ofColor[0] ?? null
+    setSelectedVariant(first)
+
+    // Volta para a imagem principal ao trocar de cor
+    const primaryIdx = product.images.findIndex((i) => i.isPrimary)
+    setSelectedImage(primaryIdx >= 0 ? primaryIdx : 0)
+  }
 
   const handleAddToCart = () => {
     if (!product) return
@@ -50,7 +97,6 @@ export function ProductPage() {
     setAdding(false)
   }
 
-  const activeVariants = product?.variants ?? []
   const stock = selectedVariant?.stockQuantity ?? product?.totalStock ?? 0
 
   if (loading) return <div className="flex justify-center py-32"><Spinner className="w-10 h-10" /></div>
@@ -58,19 +104,22 @@ export function ProductPage() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-      <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-sm text-gray-500 hover:text-brand-600 mb-8 transition-colors">
+      <button
+        onClick={() => navigate(-1)}
+        className="flex items-center gap-2 text-sm text-gray-500 hover:text-brand-600 mb-8 transition-colors"
+      >
         <ChevronLeft className="w-4 h-4" /> Voltar
       </button>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-16">
-        {/* Images */}
+        {/* Galeria de imagens */}
         <div className="space-y-4">
           <div className="aspect-square rounded-3xl overflow-hidden bg-gray-100">
             {product.images[selectedImage]?.url ? (
               <img
                 src={product.images[selectedImage].url}
                 alt={product.name}
-                className="w-full h-full object-cover"
+                className="w-full h-full object-cover transition-opacity duration-200"
               />
             ) : (
               <div className="w-full h-full flex items-center justify-center text-gray-300">
@@ -79,14 +128,14 @@ export function ProductPage() {
             )}
           </div>
           {product.images.length > 1 && (
-            <div className="flex gap-3 overflow-x-auto">
+            <div className="flex gap-3 overflow-x-auto pb-1">
               {product.images.map((img, i) => (
                 <button
                   key={img.id}
                   onClick={() => setSelectedImage(i)}
                   className={cn(
                     'flex-shrink-0 w-20 h-20 rounded-xl overflow-hidden border-2 transition-colors',
-                    selectedImage === i ? 'border-brand-500' : 'border-transparent'
+                    selectedImage === i ? 'border-brand-500' : 'border-transparent hover:border-gray-300',
                   )}
                 >
                   <img src={img.url} alt="" className="w-full h-full object-cover" />
@@ -99,24 +148,34 @@ export function ProductPage() {
         {/* Info */}
         <div className="space-y-6">
           <div>
-            {product.brand && <p className="text-sm font-medium text-gray-400 uppercase tracking-widest mb-2">{product.brand}</p>}
+            {product.brand && (
+              <p className="text-sm font-medium text-gray-400 uppercase tracking-widest mb-2">{product.brand}</p>
+            )}
             <h1 className="text-3xl font-black text-gray-900">{product.name}</h1>
             <p className="text-sm text-gray-500 mt-1">{product.categoryName}</p>
           </div>
 
-          {/* Rating */}
+          {/* Avaliações */}
           {product.reviewCount > 0 && (
             <div className="flex items-center gap-2">
               <div className="flex">
-                {[1,2,3,4,5].map((s) => (
-                  <Star key={s} className={cn('w-4 h-4', s <= Math.round(product.averageRating) ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300')} />
+                {[1, 2, 3, 4, 5].map((s) => (
+                  <Star
+                    key={s}
+                    className={cn(
+                      'w-4 h-4',
+                      s <= Math.round(product.averageRating)
+                        ? 'fill-yellow-400 text-yellow-400'
+                        : 'text-gray-300',
+                    )}
+                  />
                 ))}
               </div>
               <span className="text-sm text-gray-500">({product.reviewCount} avaliações)</span>
             </div>
           )}
 
-          {/* Price */}
+          {/* Preço */}
           <div className="flex items-baseline gap-3">
             {product.discountPrice ? (
               <>
@@ -131,24 +190,61 @@ export function ProductPage() {
             )}
           </div>
 
-          {/* Variants / Sizes */}
-          {activeVariants.length > 0 && (
+          {/* Seletor de COR */}
+          {hasColors && (
             <div>
               <p className="text-sm font-semibold text-gray-700 mb-3">
-                Tamanho: {selectedVariant?.size && <span className="font-black text-brand-600 ml-1">{selectedVariant.size}</span>}
+                Cor:{' '}
+                {selectedColor && (
+                  <span className="font-black text-brand-600 ml-1">{selectedColor}</span>
+                )}
               </p>
               <div className="flex flex-wrap gap-2">
-                {activeVariants.map((v) => (
+                {uniqueColors.map((color) => {
+                  const hasStock = product.variants.some(
+                    (v) => v.color === color && v.stockQuantity > 0,
+                  )
+                  return (
+                    <button
+                      key={color}
+                      onClick={() => handleColorSelect(color)}
+                      className={cn(
+                        'px-4 py-2 rounded-xl border-2 text-sm font-semibold transition-all',
+                        selectedColor === color
+                          ? 'border-brand-600 bg-brand-600 text-white'
+                          : 'border-gray-200 text-gray-700 hover:border-brand-400',
+                        !hasStock && 'opacity-40 cursor-not-allowed line-through',
+                      )}
+                    >
+                      {color}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Seletor de TAMANHO — filtrado pela cor selecionada */}
+          {variantsForColor.length > 0 && (
+            <div>
+              <p className="text-sm font-semibold text-gray-700 mb-3">
+                Tamanho:{' '}
+                {selectedVariant && (
+                  <span className="font-black text-brand-600 ml-1">{selectedVariant.size}</span>
+                )}
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {variantsForColor.map((v) => (
                   <button
                     key={v.id}
-                    onClick={() => setSelectedVariant(v)}
+                    onClick={() => { setSelectedVariant(v); setQuantity(1) }}
                     disabled={v.stockQuantity === 0}
                     className={cn(
                       'w-14 h-14 rounded-xl border-2 text-sm font-semibold transition-all',
                       selectedVariant?.id === v.id
                         ? 'border-brand-600 bg-brand-600 text-white'
                         : 'border-gray-200 text-gray-700 hover:border-brand-400',
-                      v.stockQuantity === 0 && 'opacity-40 cursor-not-allowed line-through'
+                      v.stockQuantity === 0 && 'opacity-40 cursor-not-allowed line-through',
                     )}
                   >
                     {v.size}
@@ -158,7 +254,7 @@ export function ProductPage() {
             </div>
           )}
 
-          {/* Quantity */}
+          {/* Quantidade */}
           <div>
             <p className="text-sm font-semibold text-gray-700 mb-3">Quantidade</p>
             <div className="flex items-center gap-3">
@@ -180,23 +276,25 @@ export function ProductPage() {
             </div>
           </div>
 
-          {/* Add to cart */}
+          {/* Botão adicionar */}
           <Button
             size="lg"
             onClick={handleAddToCart}
             loading={adding}
-            disabled={stock === 0}
+            disabled={stock === 0 || (product.variants.length > 0 && !selectedVariant)}
             className="w-full gap-2"
           >
             <ShoppingCart className="w-5 h-5" />
             {stock === 0 ? 'Produto Esgotado' : 'Adicionar ao Carrinho'}
           </Button>
 
-          {/* Description */}
+          {/* Descrição */}
           {product.description && (
             <div className="border-t border-gray-100 pt-6">
               <h3 className="font-semibold text-gray-900 mb-2">Descrição</h3>
-              <p className="text-gray-600 text-sm leading-relaxed whitespace-pre-line">{product.description}</p>
+              <p className="text-gray-600 text-sm leading-relaxed whitespace-pre-line">
+                {product.description}
+              </p>
             </div>
           )}
         </div>
