@@ -17,6 +17,7 @@ interface RawImage {
   alt_text: string | null
   is_primary: boolean
   display_order: number
+  color: string | null
 }
 
 interface RawProduct {
@@ -84,6 +85,7 @@ function toProduct(r: RawProduct): Product {
         altText: img.alt_text ?? undefined,
         isPrimary: img.is_primary,
         displayOrder: img.display_order,
+        color: img.color ?? undefined,
       })),
     variants: (r.product_variants ?? []).map((v) => ({
       id: v.id,
@@ -290,7 +292,7 @@ export const productService = {
     }
   },
 
-  uploadImage: async (productId: string, file: File, isPrimary = false): Promise<ProductImage> => {
+  uploadImage: async (productId: string, file: File, isPrimary = false, color?: string): Promise<ProductImage> => {
     const blob = await toWebP(file)
     const path = `${productId}/${crypto.randomUUID()}.webp`
 
@@ -312,7 +314,7 @@ export const productService = {
 
     const { data, error: dbErr } = await supabase
       .from('product_images')
-      .insert({ product_id: productId, url: publicUrl, is_primary: isPrimary, display_order: 0 })
+      .insert({ product_id: productId, url: publicUrl, is_primary: isPrimary, display_order: 0, color: color ?? null })
       .select()
       .single()
     if (dbErr) throw dbErr
@@ -323,7 +325,16 @@ export const productService = {
       altText: data.alt_text ?? undefined,
       isPrimary: data.is_primary,
       displayOrder: data.display_order,
+      color: data.color ?? undefined,
     }
+  },
+
+  updateImageColor: async (imageId: string, color: string | null): Promise<void> => {
+    const { error } = await supabase
+      .from('product_images')
+      .update({ color: color ?? null })
+      .eq('id', imageId)
+    if (error) throw error
   },
 
   deleteImage: async (imageId: string): Promise<void> => {

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { Star, ShoppingCart, ChevronLeft, Package } from 'lucide-react'
-import type { Product, ProductVariant } from '@/types'
+import type { Product, ProductVariant, ProductImage } from '@/types'
 import { productService } from '@/services/productService'
 import { useCartStore } from '@/store/cartStore'
 import { formatCurrency } from '@/utils/format'
@@ -14,7 +14,7 @@ export function ProductPage() {
   const navigate = useNavigate()
   const [product, setProduct] = useState<Product | null>(null)
   const [loading, setLoading] = useState(true)
-  const [selectedImage, setSelectedImage] = useState(0)
+  const [selectedImageId, setSelectedImageId] = useState<string | null>(null)
   const [selectedColor, setSelectedColor] = useState<string | null>(null)
   const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(null)
   const [quantity, setQuantity] = useState(1)
@@ -26,34 +26,52 @@ export function ProductPage() {
     productService.getBySlug(slug).then((p) => {
       setProduct(p)
 
-      // Imagem principal
-      const primaryIdx = p.images.findIndex((i) => i.isPrimary)
-      setSelectedImage(primaryIdx >= 0 ? primaryIdx : 0)
+      const primary = p.images.find((i) => i.isPrimary) ?? p.images[0]
 
-      // Se tem variantes com cor, pré-seleciona a primeira cor e o primeiro tamanho dela
       const firstWithColor = p.variants.find((v) => v.color)
       if (firstWithColor?.color) {
-        setSelectedColor(firstWithColor.color)
+        const color = firstWithColor.color
+        setSelectedColor(color)
+
+        // Prefere a primeira foto específica dessa cor, senão usa a principal
+        const colorImg = p.images.find((img) => img.color === color)
+        setSelectedImageId((colorImg ?? primary)?.id ?? null)
+
         const firstVariant =
-          p.variants.find((v) => v.color === firstWithColor.color && v.stockQuantity > 0) ??
-          p.variants.find((v) => v.color === firstWithColor.color) ??
+          p.variants.find((v) => v.color === color && v.stockQuantity > 0) ??
+          p.variants.find((v) => v.color === color) ??
           null
         setSelectedVariant(firstVariant)
-      } else if (p.variants.length > 0) {
-        // Produto sem cores — pré-seleciona primeiro tamanho disponível
-        const firstVariant =
-          p.variants.find((v) => v.stockQuantity > 0) ?? p.variants[0]
-        setSelectedVariant(firstVariant ?? null)
+      } else {
+        setSelectedImageId(primary?.id ?? null)
+        if (p.variants.length > 0) {
+          const first = p.variants.find((v) => v.stockQuantity > 0) ?? p.variants[0]
+          setSelectedVariant(first ?? null)
+        }
       }
     }).catch(() => navigate('/404')).finally(() => setLoading(false))
   }, [slug, navigate])
 
-  // Cores únicas do produto (ordem de aparição)
+  // Cores únicas do produto (em ordem de aparição)
   const uniqueColors: string[] = product
     ? [...new Set(product.variants.filter((v) => v.color).map((v) => v.color!))]
     : []
 
   const hasColors = uniqueColors.length > 0
+
+  // Imagens visíveis para a cor selecionada:
+  // - fotos sem cor: aparecem em todas as cores
+  // - fotos com cor: aparecem apenas quando aquela cor está selecionada
+  const visibleImages: ProductImage[] = product
+    ? hasColors && selectedColor
+      ? product.images.filter((img) => !img.color || img.color === selectedColor)
+      : product.images
+    : []
+
+  // Se a galeria filtrada não tem nenhuma foto específica da cor, mostra todas sem cor
+  const displayImages = visibleImages.length > 0 ? visibleImages : (product?.images ?? [])
+
+  const selectedImage = displayImages.find((img) => img.id === selectedImageId) ?? displayImages[0]
 
   // Variantes filtradas pela cor selecionada
   const variantsForColor: ProductVariant[] = product
@@ -67,14 +85,15 @@ export function ProductPage() {
     setSelectedColor(color)
     setQuantity(1)
 
-    // Primeiro tamanho disponível da nova cor (ou primeiro se todos esgotados)
+    // Foto: prefere a primeira específica dessa cor, senão a primeira genérica (sem cor)
+    const colorImg = product.images.find((img) => img.color === color)
+    const genericImg = product.images.find((img) => !img.color)
+    setSelectedImageId((colorImg ?? genericImg ?? product.images[0])?.id ?? null)
+
+    // Tamanho: primeiro em estoque, ou primeiro se todos esgotados
     const ofColor = product.variants.filter((v) => v.color === color)
     const first = ofColor.find((v) => v.stockQuantity > 0) ?? ofColor[0] ?? null
     setSelectedVariant(first)
-
-    // Volta para a imagem principal ao trocar de cor
-    const primaryIdx = product.images.findIndex((i) => i.isPrimary)
-    setSelectedImage(primaryIdx >= 0 ? primaryIdx : 0)
   }
 
   const handleAddToCart = () => {
@@ -112,12 +131,13 @@ export function ProductPage() {
       </button>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-16">
-        {/* Galeria de imagens */}
+        {/* Galeria */}
         <div className="space-y-4">
           <div className="aspect-square rounded-3xl overflow-hidden bg-gray-100">
-            {product.images[selectedImage]?.url ? (
+            {selectedImage?.url ? (
               <img
-                src={product.images[selectedImage].url}
+                key={selectedImage.id}
+                src={selectedImage.url}
                 alt={product.name}
                 className="w-full h-full object-cover transition-opacity duration-200"
               />
@@ -127,15 +147,18 @@ export function ProductPage() {
               </div>
             )}
           </div>
-          {product.images.length > 1 && (
+
+          {displayImages.length > 1 && (
             <div className="flex gap-3 overflow-x-auto pb-1">
-              {product.images.map((img, i) => (
+              {displayImages.map((img) => (
                 <button
                   key={img.id}
-                  onClick={() => setSelectedImage(i)}
+                  onClick={() => setSelectedImageId(img.id)}
                   className={cn(
                     'flex-shrink-0 w-20 h-20 rounded-xl overflow-hidden border-2 transition-colors',
-                    selectedImage === i ? 'border-brand-500' : 'border-transparent hover:border-gray-300',
+                    selectedImageId === img.id
+                      ? 'border-brand-500'
+                      : 'border-transparent hover:border-gray-300',
                   )}
                 >
                   <img src={img.url} alt="" className="w-full h-full object-cover" />
@@ -149,13 +172,14 @@ export function ProductPage() {
         <div className="space-y-6">
           <div>
             {product.brand && (
-              <p className="text-sm font-medium text-gray-400 uppercase tracking-widest mb-2">{product.brand}</p>
+              <p className="text-sm font-medium text-gray-400 uppercase tracking-widest mb-2">
+                {product.brand}
+              </p>
             )}
             <h1 className="text-3xl font-black text-gray-900">{product.name}</h1>
             <p className="text-sm text-gray-500 mt-1">{product.categoryName}</p>
           </div>
 
-          {/* Avaliações */}
           {product.reviewCount > 0 && (
             <div className="flex items-center gap-2">
               <div className="flex">
@@ -224,7 +248,7 @@ export function ProductPage() {
             </div>
           )}
 
-          {/* Seletor de TAMANHO — filtrado pela cor selecionada */}
+          {/* Seletor de TAMANHO — filtrado pela cor */}
           {variantsForColor.length > 0 && (
             <div>
               <p className="text-sm font-semibold text-gray-700 mb-3">
@@ -276,7 +300,6 @@ export function ProductPage() {
             </div>
           </div>
 
-          {/* Botão adicionar */}
           <Button
             size="lg"
             onClick={handleAddToCart}
@@ -288,7 +311,6 @@ export function ProductPage() {
             {stock === 0 ? 'Produto Esgotado' : 'Adicionar ao Carrinho'}
           </Button>
 
-          {/* Descrição */}
           {product.description && (
             <div className="border-t border-gray-100 pt-6">
               <h3 className="font-semibold text-gray-900 mb-2">Descrição</h3>

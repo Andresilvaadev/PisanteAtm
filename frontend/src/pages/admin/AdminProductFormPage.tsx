@@ -47,7 +47,7 @@ export function AdminProductFormPage() {
   // Imagens já salvas (edição)
   const [savedImages, setSavedImages] = useState<ProductImage[]>([])
   // Novas imagens a enviar
-  const [newImages, setNewImages] = useState<{ file: File; preview: string; isPrimary: boolean }[]>([])
+  const [newImages, setNewImages] = useState<{ file: File; preview: string; isPrimary: boolean; color: string }[]>([])
   const fileRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
@@ -93,9 +93,19 @@ export function AdminProductFormPage() {
       file,
       preview: URL.createObjectURL(file),
       isPrimary: savedImages.length === 0 && newImages.length === 0 && i === 0,
+      color: '',
     }))
     setNewImages((prev) => [...prev, ...newEntries])
     e.target.value = ''
+  }
+
+  const handleUpdateImageColor = async (imgId: string, color: string | null) => {
+    try {
+      await productService.updateImageColor(imgId, color)
+      setSavedImages((prev) => prev.map((img) => img.id === imgId ? { ...img, color: color ?? undefined } : img))
+    } catch {
+      toast.error('Erro ao atualizar cor da imagem')
+    }
   }
 
   const removeNewImage = (i: number) =>
@@ -152,7 +162,7 @@ export function AdminProductFormPage() {
 
       // Upload das novas imagens
       for (const img of newImages) {
-        await productService.uploadImage(productId, img.file, img.isPrimary)
+        await productService.uploadImage(productId, img.file, img.isPrimary, img.color || undefined)
       }
 
       navigate('/admin/produtos')
@@ -165,6 +175,9 @@ export function AdminProductFormPage() {
   }
 
   if (loading) return <div className="flex justify-center py-20"><Spinner /></div>
+
+  // Cores únicas dos variants (para o dropdown de cor por foto)
+  const uniqueVariantColors = [...new Set(variants.filter((v) => v.color).map((v) => v.color))]
 
   const allImages = [
     ...savedImages.map((img) => ({ type: 'saved' as const, img })),
@@ -366,55 +379,85 @@ export function AdminProductFormPage() {
             ) : (
               <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
                 {savedImages.map((img) => (
-                  <div key={img.id} className="relative group aspect-square">
-                    <img
-                      src={img.url}
-                      alt=""
-                      className="w-full h-full object-cover rounded-xl border border-gray-200"
-                    />
-                    {img.isPrimary && (
-                      <span className="absolute top-1 left-1 bg-brand-600 text-white text-xs px-1.5 py-0.5 rounded-full flex items-center gap-0.5">
-                        <Star className="w-2.5 h-2.5 fill-current" /> Principal
-                      </span>
+                  <div key={img.id} className="group">
+                    <div className="relative aspect-square">
+                      <img
+                        src={img.url}
+                        alt=""
+                        className="w-full h-full object-cover rounded-xl border border-gray-200"
+                      />
+                      {img.isPrimary && (
+                        <span className="absolute top-1 left-1 bg-brand-600 text-white text-xs px-1.5 py-0.5 rounded-full flex items-center gap-0.5">
+                          <Star className="w-2.5 h-2.5 fill-current" /> Principal
+                        </span>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => removeSavedImage(img.id)}
+                        className="absolute top-1 right-1 bg-black/60 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </div>
+                    {uniqueVariantColors.length > 0 && (
+                      <select
+                        value={img.color ?? ''}
+                        onChange={(e) => handleUpdateImageColor(img.id, e.target.value || null)}
+                        className="w-full mt-1 text-xs rounded-lg border border-gray-200 px-2 py-1 bg-white focus:outline-none focus:ring-1 focus:ring-brand-300"
+                      >
+                        <option value="">Sem cor</option>
+                        {uniqueVariantColors.map((c) => (
+                          <option key={c} value={c}>{c}</option>
+                        ))}
+                      </select>
                     )}
-                    <button
-                      type="button"
-                      onClick={() => removeSavedImage(img.id)}
-                      className="absolute top-1 right-1 bg-black/60 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
-                    >
-                      <X className="w-3 h-3" />
-                    </button>
                   </div>
                 ))}
                 {newImages.map((img, i) => (
-                  <div key={i} className="relative group aspect-square">
-                    <img
-                      src={img.preview}
-                      alt=""
-                      className={`w-full h-full object-cover rounded-xl border-2 transition-colors ${
-                        img.isPrimary ? 'border-brand-500' : 'border-gray-200'
-                      }`}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => togglePrimary(i)}
-                      title="Definir como principal"
-                      className={`absolute top-1 left-1 text-xs px-1.5 py-0.5 rounded-full flex items-center gap-0.5 transition-colors ${
-                        img.isPrimary
-                          ? 'bg-brand-600 text-white'
-                          : 'bg-black/50 text-white opacity-0 group-hover:opacity-100'
-                      }`}
-                    >
-                      <Star className="w-2.5 h-2.5 fill-current" />
-                      {img.isPrimary ? ' Principal' : ''}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => removeNewImage(i)}
-                      className="absolute top-1 right-1 bg-black/60 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
-                    >
-                      <X className="w-3 h-3" />
-                    </button>
+                  <div key={i} className="group">
+                    <div className="relative aspect-square">
+                      <img
+                        src={img.preview}
+                        alt=""
+                        className={`w-full h-full object-cover rounded-xl border-2 transition-colors ${
+                          img.isPrimary ? 'border-brand-500' : 'border-gray-200'
+                        }`}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => togglePrimary(i)}
+                        title="Definir como principal"
+                        className={`absolute top-1 left-1 text-xs px-1.5 py-0.5 rounded-full flex items-center gap-0.5 transition-colors ${
+                          img.isPrimary
+                            ? 'bg-brand-600 text-white'
+                            : 'bg-black/50 text-white opacity-0 group-hover:opacity-100'
+                        }`}
+                      >
+                        <Star className="w-2.5 h-2.5 fill-current" />
+                        {img.isPrimary ? ' Principal' : ''}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => removeNewImage(i)}
+                        className="absolute top-1 right-1 bg-black/60 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </div>
+                    {uniqueVariantColors.length > 0 && (
+                      <select
+                        value={img.color}
+                        onChange={(e) => setNewImages((prev) =>
+                          prev.map((im, idx) => idx === i ? { ...im, color: e.target.value } : im)
+                        )}
+                        className="w-full mt-1 text-xs rounded-lg border border-gray-200 px-2 py-1 bg-white focus:outline-none focus:ring-1 focus:ring-brand-300"
+                      >
+                        <option value="">Sem cor</option>
+                        {uniqueVariantColors.map((c) => (
+                          <option key={c} value={c}>{c}</option>
+                        ))}
+                      </select>
+                    )}
                   </div>
                 ))}
                 <button

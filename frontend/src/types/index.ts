@@ -33,6 +33,7 @@ export interface ProductImage {
   altText?: string
   isPrimary: boolean
   displayOrder: number
+  color?: string
 }
 
 export interface ProductVariant {
