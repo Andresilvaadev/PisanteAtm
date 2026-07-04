@@ -30,7 +30,7 @@ export interface OrdersPage {
   hasPreviousPage: boolean
 }
 
-function generateOrderNumber(): string {
+export function generateOrderNumber(): string {
   const d = new Date()
   const yyyymmdd = d.toISOString().slice(0, 10).replace(/-/g, '')
   const rand = Math.floor(1000 + Math.random() * 9000)
@@ -84,8 +84,9 @@ export const orderService = {
     subtotal: number,
     total: number,
     whatsappUrl: string,
+    orderNumber?: string,
   ): Promise<SupabaseOrder> => {
-    const order_number = generateOrderNumber()
+    const order_number = orderNumber ?? generateOrderNumber()
     const items: SupabaseOrderItem[] = cartItems.map((i) => ({
       product_id: i.productId,
       product_name: i.productName,
