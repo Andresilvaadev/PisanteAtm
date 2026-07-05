@@ -18,7 +18,6 @@ import { AdminDashboardPage } from '@/pages/admin/DashboardPage'
 import { AdminProductsPage } from '@/pages/admin/AdminProductsPage'
 import { AdminProductFormPage } from '@/pages/admin/AdminProductFormPage'
 import { AdminCategoriesPage } from '@/pages/admin/AdminCategoriesPage'
-import { AdminOrdersPage } from '@/pages/admin/AdminOrdersPage'
 
 function App() {
   return (
@@ -49,8 +48,7 @@ function App() {
           <Route path="produtos/novo" element={<AdminProductFormPage />} />
           <Route path="produtos/:id/editar" element={<AdminProductFormPage />} />
           <Route path="categorias" element={<AdminCategoriesPage />} />
-          <Route path="pedidos" element={<AdminOrdersPage />} />
-          <Route path="usuarios" element={<div className="text-gray-500 p-4">Em breve</div>} />
+<Route path="usuarios" element={<div className="text-gray-500 p-4">Em breve</div>} />
         </Route>
 
         {/* Loja — pública */}

@@ -399,7 +399,7 @@ export function AdminProductFormPage() {
                         <X className="w-3 h-3" />
                       </button>
                     </div>
-                    {uniqueVariantColors.length > 0 && (
+                    {uniqueVariantColors.length > 0 ? (
                       <select
                         value={img.color ?? ''}
                         onChange={(e) => handleUpdateImageColor(img.id, e.target.value || null)}
@@ -410,6 +410,14 @@ export function AdminProductFormPage() {
                           <option key={c} value={c}>{c}</option>
                         ))}
                       </select>
+                    ) : (
+                      <input
+                        type="text"
+                        value={img.color ?? ''}
+                        onChange={(e) => handleUpdateImageColor(img.id, e.target.value || null)}
+                        placeholder="Cor (ex: Azul)"
+                        className="w-full mt-1 text-xs rounded-lg border border-gray-200 px-2 py-1 focus:outline-none focus:ring-1 focus:ring-brand-300"
+                      />
                     )}
                   </div>
                 ))}
@@ -444,7 +452,7 @@ export function AdminProductFormPage() {
                         <X className="w-3 h-3" />
                       </button>
                     </div>
-                    {uniqueVariantColors.length > 0 && (
+                    {uniqueVariantColors.length > 0 ? (
                       <select
                         value={img.color}
                         onChange={(e) => setNewImages((prev) =>
@@ -457,6 +465,16 @@ export function AdminProductFormPage() {
                           <option key={c} value={c}>{c}</option>
                         ))}
                       </select>
+                    ) : (
+                      <input
+                        type="text"
+                        value={img.color}
+                        onChange={(e) => setNewImages((prev) =>
+                          prev.map((im, idx) => idx === i ? { ...im, color: e.target.value } : im)
+                        )}
+                        placeholder="Cor (ex: Azul)"
+                        className="w-full mt-1 text-xs rounded-lg border border-gray-200 px-2 py-1 focus:outline-none focus:ring-1 focus:ring-brand-300"
+                      />
                     )}
                   </div>
                 ))}

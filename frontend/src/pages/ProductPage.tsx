@@ -107,6 +107,7 @@ export function ProductPage() {
       productImageUrl: primaryImg?.url,
       productSlug: product.slug,
       variantId: selectedVariant?.id,
+      sku: selectedVariant?.sku,
       size: selectedVariant?.size,
       color: selectedVariant?.color,
       unitPrice: product.discountPrice ?? product.price,
@@ -155,7 +156,7 @@ export function ProductPage() {
                   key={img.id}
                   onClick={() => setSelectedImageId(img.id)}
                   className={cn(
-                    'flex-shrink-0 w-20 h-20 rounded-xl overflow-hidden border-2 transition-colors',
+                    'flex-shrink-0 w-20 h-20 overflow-hidden border-2 transition-colors',
                     selectedImageId === img.id
                       ? 'border-brand-500'
                       : 'border-transparent hover:border-gray-300',
@@ -172,12 +173,12 @@ export function ProductPage() {
         <div className="space-y-6">
           <div>
             {product.brand && (
-              <p className="text-sm font-medium text-gray-400 uppercase tracking-widest mb-2">
+              <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-2">
                 {product.brand}
               </p>
             )}
-            <h1 className="text-3xl font-black text-gray-900">{product.name}</h1>
-            <p className="text-sm text-gray-500 mt-1">{product.categoryName}</p>
+            <h1 className="font-serif text-3xl font-bold text-gray-900">{product.name}</h1>
+            <p className="text-sm text-gray-400 mt-1 tracking-wide">{product.categoryName}</p>
           </div>
 
           {product.reviewCount > 0 && (
@@ -203,14 +204,14 @@ export function ProductPage() {
           <div className="flex items-baseline gap-3">
             {product.discountPrice ? (
               <>
-                <span className="text-4xl font-black text-brand-600">{formatCurrency(product.discountPrice)}</span>
+                <span className="text-4xl font-bold text-brand-600">{formatCurrency(product.discountPrice)}</span>
                 <span className="text-xl text-gray-400 line-through">{formatCurrency(product.price)}</span>
-                <span className="bg-red-100 text-red-700 text-sm font-bold px-2 py-0.5 rounded-lg">
+                <span className="bg-black text-brand-500 text-xs font-bold px-2.5 py-1 tracking-wider">
                   -{Math.round(((product.price - product.discountPrice) / product.price) * 100)}%
                 </span>
               </>
             ) : (
-              <span className="text-4xl font-black text-gray-900">{formatCurrency(product.price)}</span>
+              <span className="text-4xl font-bold text-gray-900">{formatCurrency(product.price)}</span>
             )}
           </div>
 
@@ -235,8 +236,8 @@ export function ProductPage() {
                       className={cn(
                         'px-4 py-2 rounded-xl border-2 text-sm font-semibold transition-all',
                         selectedColor === color
-                          ? 'border-brand-600 bg-brand-600 text-white'
-                          : 'border-gray-200 text-gray-700 hover:border-brand-400',
+                          ? 'border-black bg-black text-brand-500'
+                          : 'border-gray-200 text-gray-700 hover:border-brand-500',
                         !hasStock && 'opacity-40 cursor-not-allowed line-through',
                       )}
                     >
@@ -264,10 +265,10 @@ export function ProductPage() {
                     onClick={() => { setSelectedVariant(v); setQuantity(1) }}
                     disabled={v.stockQuantity === 0}
                     className={cn(
-                      'w-14 h-14 rounded-xl border-2 text-sm font-semibold transition-all',
+                      'w-14 h-14 border-2 text-sm font-semibold transition-all',
                       selectedVariant?.id === v.id
-                        ? 'border-brand-600 bg-brand-600 text-white'
-                        : 'border-gray-200 text-gray-700 hover:border-brand-400',
+                        ? 'border-black bg-black text-brand-500'
+                        : 'border-gray-200 text-gray-700 hover:border-brand-500',
                       v.stockQuantity === 0 && 'opacity-40 cursor-not-allowed line-through',
                     )}
                   >

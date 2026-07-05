@@ -1,37 +1,40 @@
 import { Link } from 'react-router-dom'
-import { Instagram, Facebook, Phone } from 'lucide-react'
+import { Instagram, Phone } from 'lucide-react'
 
 export function Footer() {
   return (
-    <footer className="bg-gray-900 text-gray-300 pt-16 pb-8 mt-auto">
+    <footer className="bg-black text-gray-400 pt-16 pb-8 mt-auto">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-10 pb-12 border-b border-gray-800">
+        {/* Gold divider */}
+        <div className="gold-divider mb-12" />
+
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-10 pb-12">
           {/* Brand */}
           <div className="md:col-span-2">
-            <div className="flex items-baseline gap-2 mb-4">
-              <span className="text-2xl font-black text-white tracking-tight">PISANTE</span>
-              <span className="text-sm font-semibold text-brand-400">ATM</span>
+            <div className="mb-4">
+              <img
+                src="/pisantelogo.png"
+                alt="Pisante ATM"
+                className="h-16 w-auto object-contain"
+              />
             </div>
-            <p className="text-sm text-gray-400 leading-relaxed max-w-xs">
+            <p className="text-sm text-gray-500 leading-relaxed max-w-xs">
               Sua loja de calçados e roupas com estilo. Qualidade e conforto para o seu dia a dia.
             </p>
-            <div className="flex gap-4 mt-6">
-              <a href="#" aria-label="Instagram" className="p-2 rounded-xl bg-gray-800 hover:bg-brand-600 transition-colors">
-                <Instagram className="w-5 h-5" />
+            <div className="flex gap-3 mt-6">
+              <a href="https://www.instagram.com/pisanteatm/" target="_blank" rel="noopener noreferrer" aria-label="Instagram" className="p-2.5 rounded-lg bg-stone-900 hover:bg-brand-600 hover:text-black text-gray-400 transition-colors">
+                <Instagram className="w-4 h-4" />
               </a>
-              <a href="#" aria-label="Facebook" className="p-2 rounded-xl bg-gray-800 hover:bg-brand-600 transition-colors">
-                <Facebook className="w-5 h-5" />
-              </a>
-              <a href="https://wa.me/5500000000000" aria-label="WhatsApp" className="p-2 rounded-xl bg-gray-800 hover:bg-green-600 transition-colors">
-                <Phone className="w-5 h-5" />
+              <a href="https://wa.me/559391099374" aria-label="WhatsApp" className="p-2.5 rounded-lg bg-stone-900 hover:bg-green-600 hover:text-white text-gray-400 transition-colors">
+                <Phone className="w-4 h-4" />
               </a>
             </div>
           </div>
 
           {/* Links */}
           <div>
-            <h4 className="text-white font-semibold mb-4 text-sm uppercase tracking-wider">Loja</h4>
-            <ul className="space-y-2.5">
+            <h4 className="text-white font-semibold mb-5 text-xs uppercase tracking-widest">Loja</h4>
+            <ul className="space-y-3">
               {[
                 ['Catálogo', '/catalogo'],
                 ['Promoções', '/catalogo?sortBy=price_asc'],
@@ -39,7 +42,7 @@ export function Footer() {
                 ['Mais Vendidos', '/catalogo?sortBy=sales'],
               ].map(([label, href]) => (
                 <li key={label}>
-                  <Link to={href} className="text-sm text-gray-400 hover:text-white transition-colors">
+                  <Link to={href} className="text-sm text-gray-500 hover:text-brand-500 transition-colors">
                     {label}
                   </Link>
                 </li>
@@ -49,21 +52,26 @@ export function Footer() {
 
           {/* Atendimento */}
           <div>
-            <h4 className="text-white font-semibold mb-4 text-sm uppercase tracking-wider">Atendimento</h4>
-            <ul className="space-y-2.5">
-              <li><span className="text-sm text-gray-400">Seg–Sex: 9h às 18h</span></li>
-              <li><a href="https://wa.me/5500000000000" className="text-sm text-gray-400 hover:text-white transition-colors">WhatsApp</a></li>
+            <h4 className="text-white font-semibold mb-5 text-xs uppercase tracking-widest">Atendimento</h4>
+            <ul className="space-y-3">
+              <li><span className="text-sm text-gray-500">Seg–Sex: 9h às 18h</span></li>
+              <li>
+                <a href="https://wa.me/559391099374" className="text-sm text-gray-500 hover:text-brand-500 transition-colors">
+                  WhatsApp
+                </a>
+              </li>
             </ul>
           </div>
         </div>
 
-        <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="text-xs text-gray-500">
-            © {new Date().getFullYear()} Pisante ATM. Todos os direitos reservados.
+        <div className="gold-divider mb-8" />
+
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+          <p className="text-xs text-gray-600 footer__credit">
+            © {new Date().getFullYear()} Pisante ATM. By <a href="https://instagram.com/valtryxsystems" target="_blank" rel="noopener noreferrer" className="text-white">Valtryx Systems</a>
           </p>
-          <div className="flex items-center gap-4">
-            <p className="text-xs text-gray-500">CNPJ: 00.000.000/0001-00</p>
-            <Link to="/login" className="text-xs text-gray-700 hover:text-gray-500 transition-colors">
+          <div className="flex items-center gap-5">
+            <Link to="/login" className="text-xs text-gray-700 hover:text-brand-500 transition-colors">
               Área Administrativa
             </Link>
           </div>

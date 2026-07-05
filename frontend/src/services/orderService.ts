@@ -49,7 +49,7 @@ export function buildWhatsAppMessage(items: LocalCartItem[], total: number, orde
     '',
     `*Total: R$ ${total.toFixed(2)}*`,
     '',
-    `IDs: ${items.map((i) => i.productId).join(', ')}`,
+    ...(items.some((i) => i.sku) ? [`SKUs: ${items.map((i) => i.sku ?? '-').join(', ')}`] : []),
   ]
   const text = encodeURIComponent(lines.join('\n'))
   return `https://wa.me/${whatsappNumber}?text=${text}`

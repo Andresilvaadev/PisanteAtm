@@ -62,53 +62,59 @@ export function CatalogPage() {
   }, [page, search, categoryId, sortBy, minPrice, maxPrice])
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-8">
-        <div className="flex-1">
-          <h1 className="text-3xl font-black text-gray-900">Catálogo</h1>
-          {result && (
-            <p className="text-sm text-gray-500 mt-1">{result.totalCount} produtos encontrados</p>
-          )}
-        </div>
+      <div className="mb-10">
+        <p className="text-xs text-brand-600 font-semibold tracking-widest uppercase mb-2">Nossa Coleção</p>
+        <div className="flex flex-col sm:flex-row sm:items-end gap-4">
+          <div className="flex-1">
+            <h1 className="font-serif text-4xl font-bold text-gray-900">Catálogo</h1>
+            {result && (
+              <p className="text-sm text-gray-400 mt-1">{result.totalCount} produtos encontrados</p>
+            )}
+          </div>
 
-        <div className="flex items-center gap-3">
-          <Input
-            placeholder="Buscar..."
-            value={search}
-            onChange={(e) => setParam('search', e.target.value)}
-            className="w-64"
-          />
-          <select
-            value={sortBy}
-            onChange={(e) => setParam('sortBy', e.target.value)}
-            className="rounded-lg border border-gray-300 text-sm px-3 py-2.5 bg-white focus:outline-none focus:ring-2 focus:ring-brand-200"
-          >
-            {SORT_OPTIONS.map((o) => (
-              <option key={o.value} value={o.value}>{o.label}</option>
-            ))}
-          </select>
-          <button
-            onClick={() => setFilterOpen(!filterOpen)}
-            className="sm:hidden p-2.5 border border-gray-300 rounded-lg"
-          >
-            <SlidersHorizontal className="w-5 h-5" />
-          </button>
+          <div className="flex items-center gap-3">
+            <Input
+              placeholder="Buscar..."
+              value={search}
+              onChange={(e) => setParam('search', e.target.value)}
+              className="w-56"
+            />
+            <select
+              value={sortBy}
+              onChange={(e) => setParam('sortBy', e.target.value)}
+              className="rounded-none border border-gray-200 text-sm px-3 py-2.5 bg-white focus:outline-none focus:ring-1 focus:ring-brand-500 text-gray-700"
+            >
+              {SORT_OPTIONS.map((o) => (
+                <option key={o.value} value={o.value}>{o.label}</option>
+              ))}
+            </select>
+            <button
+              onClick={() => setFilterOpen(!filterOpen)}
+              className="sm:hidden p-2.5 border border-gray-200"
+            >
+              <SlidersHorizontal className="w-5 h-5" />
+            </button>
+          </div>
         </div>
+        <div className="gold-divider mt-6" />
       </div>
 
-      <div className="flex gap-8">
+      <div className="flex gap-10">
         {/* Sidebar filters */}
-        <aside className={`w-64 flex-shrink-0 space-y-6 ${filterOpen ? 'block' : 'hidden sm:block'}`}>
+        <aside className={`w-56 flex-shrink-0 space-y-8 ${filterOpen ? 'block' : 'hidden sm:block'}`}>
           {/* Categories */}
           <div>
-            <h3 className="font-semibold text-gray-900 mb-3">Categorias</h3>
+            <h3 className="text-xs font-semibold text-gray-900 mb-4 uppercase tracking-widest">Categorias</h3>
             <ul className="space-y-1">
               <li>
                 <button
                   onClick={() => setParam('categoryId', '')}
-                  className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${
-                    !categoryId ? 'bg-brand-50 text-brand-700 font-medium' : 'text-gray-600 hover:bg-gray-50'
+                  className={`w-full text-left px-3 py-2 text-sm transition-colors ${
+                    !categoryId
+                      ? 'bg-black text-brand-500 font-semibold'
+                      : 'text-gray-500 hover:text-gray-900'
                   }`}
                 >
                   Todas
@@ -118,8 +124,10 @@ export function CatalogPage() {
                 <li key={c.id}>
                   <button
                     onClick={() => setParam('categoryId', c.id)}
-                    className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${
-                      categoryId === c.id ? 'bg-brand-50 text-brand-700 font-medium' : 'text-gray-600 hover:bg-gray-50'
+                    className={`w-full text-left px-3 py-2 text-sm transition-colors ${
+                      categoryId === c.id
+                        ? 'bg-black text-brand-500 font-semibold'
+                        : 'text-gray-500 hover:text-gray-900'
                     }`}
                   >
                     {c.name}
@@ -132,36 +140,34 @@ export function CatalogPage() {
 
           {/* Price */}
           <div>
-            <h3 className="font-semibold text-gray-900 mb-3">Preço</h3>
+            <h3 className="text-xs font-semibold text-gray-900 mb-4 uppercase tracking-widest">Preço</h3>
             <div className="flex gap-2 items-center">
               <Input
                 type="number"
                 placeholder="Min"
                 value={minPrice}
                 onChange={(e) => setParam('minPrice', e.target.value)}
-                className="!px-2"
+                className="!px-2 !rounded-none"
               />
-              <span className="text-gray-400">—</span>
+              <span className="text-gray-300">—</span>
               <Input
                 type="number"
                 placeholder="Max"
                 value={maxPrice}
                 onChange={(e) => setParam('maxPrice', e.target.value)}
-                className="!px-2"
+                className="!px-2 !rounded-none"
               />
             </div>
           </div>
 
           {/* Clear filters */}
           {(categoryId || minPrice || maxPrice || search) && (
-            <Button
-              variant="ghost"
-              size="sm"
+            <button
               onClick={() => setParams({})}
-              className="text-red-500 gap-1.5"
+              className="flex items-center gap-1.5 text-sm text-gray-400 hover:text-red-500 transition-colors"
             >
-              <X className="w-4 h-4" /> Limpar filtros
-            </Button>
+              <X className="w-3.5 h-3.5" /> Limpar filtros
+            </button>
           )}
         </aside>
 
@@ -169,18 +175,18 @@ export function CatalogPage() {
         <div className="flex-1">
           {loading ? (
             <div className="flex justify-center py-24">
-              <Spinner className="w-10 h-10" />
+              <Spinner className="w-8 h-8 text-brand-500" />
             </div>
           ) : result?.items.length === 0 ? (
             <div className="text-center py-24">
-              <p className="text-gray-400 text-lg">Nenhum produto encontrado</p>
-              <Button variant="outline" onClick={() => setParams({})} className="mt-4">
+              <p className="text-gray-400 text-lg mb-6">Nenhum produto encontrado</p>
+              <Button variant="outline" onClick={() => setParams({})}>
                 Limpar filtros
               </Button>
             </div>
           ) : (
             <>
-              <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-5">
+              <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-3 gap-px bg-gray-100">
                 {result?.items.map((p) => (
                   <ProductCard key={p.id} product={p} />
                 ))}
@@ -188,7 +194,7 @@ export function CatalogPage() {
 
               {/* Pagination */}
               {result && result.totalPages > 1 && (
-                <div className="flex justify-center items-center gap-2 mt-12">
+                <div className="flex justify-center items-center gap-3 mt-14">
                   <Button
                     variant="outline"
                     size="sm"
@@ -197,7 +203,7 @@ export function CatalogPage() {
                   >
                     Anterior
                   </Button>
-                  <span className="text-sm text-gray-600">
+                  <span className="text-sm text-gray-400 tracking-widest">
                     {page} / {result.totalPages}
                   </span>
                   <Button

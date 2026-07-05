@@ -9,6 +9,7 @@ export interface LocalCartItem {
   productImageUrl?: string
   productSlug: string
   variantId?: string
+  sku?: string
   size?: string
   color?: string
   unitPrice: number
